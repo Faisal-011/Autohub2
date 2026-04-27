@@ -1,0 +1,148 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * AUTO-HOUSE MANAGER SECURITY ARCHITECTURE
+     *
+     * Core Philosophy:
+     * This ruleset implements a Staff-Centric access model. It distinguishes between public showroom
+     * data (Cars) and restricted operational data (Customers, Sales, etc.). Authorization is 
+     * decoupled from application data via a dedicated /staff_roles collection.
+     *
+     * Data Structure:
+     * - /cars: Publicly readable inventory for showroom browsing.
+     * - /staff_roles: Registry of authenticated users with administrative or sales privileges.
+     * - /customers, /sales, /rentals, /appointments, /testDrives: Internal data trees accessible 
+     *   only by authenticated staff members.
+     *
+     * Key Security Decisions:
+     * - Authorization Independence: User permissions are verified against a flat /staff_roles 
+     *   collection using the request.auth.uid, avoiding expensive joins or nested lookups.
+     * - Structural Segregation: Public data (Cars) is separated from private data (Customers) 
+     *   to ensure clean query authorization.
+     * - Flexible Prototyping: While access is strictly enforced for identity, the rules do not 
+     *   restrict the shape or schema of the data attributes (excluding relational IDs).
+     */
+
+    // --- Helper Functions ---
+
+    /** Checks if the requester is signed in with Firebase Auth. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** Checks if the requester's UID exists in the staff roles registry. */
+    function isStaff() {
+      return isSignedIn() && exists(/databases/$(database)/documents/staff_roles/$(request.auth.uid));
+    }
+
+    /** Checks if the requester is the owner of the specific document ID. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** 
+     * Verifies the requester has an 'admin' role. 
+     * Note: Used primarily for managing staff permissions.
+     */
+    function isAdmin() {
+      return isStaff() && get(/databases/$(database)/documents/staff_roles/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    /** Helper for destructive operations on existing resources by staff. */
+    function isExistingStaff() {
+      return resource != null && isStaff();
+    }
+
+    // --- Collection Rules ---
+
+    /**
+     * @description Public showroom inventory. Browsable by anyone, manageable by staff.
+     * @path /cars/{carId}
+     * @allow get, list: if true; (Unauthenticated browsing)
+     * @allow create: if isStaff() && request.resource.data.id == carId; (Staff adding inventory)
+     * @deny update, delete: if !isStaff(); (Public cannot modify inventory)
+     * @principle Public read with staff-only writes; enforces path-to-ID consistency.
+     */
+    match /cars/{carId} {
+      allow get, list: if true;
+      allow create: if isStaff() && request.resource.data.id == carId;
+      allow update, delete: if isExistingStaff() && (request.resource.data.id == resource.data.id);
+    }
+
+    /**
+     * @description Registry of staff roles. Controls system-wide authorization.
+     * @path /staff_roles/{staffId}
+     * @allow get: if isOwner(staffId) || isAdmin(); (Self-view or Admin-view)
+     * @allow create, update, delete: if isAdmin(); (Admin-only management)
+     * @principle Authorization Independence; strictly controlled by administrators.
+     */
+    match /staff_roles/{staffId} {
+      allow get: if isOwner(staffId) || isAdmin();
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Customer CRM data. Contains sensitive personal information.
+     * @path /customers/{customerId}
+     * @allow get, list, create, update, delete: if isStaff();
+     * @deny get, list: if request.auth == null; (Unauthorized access)
+     * @principle Internal staff-only data tree.
+     */
+    match /customers/{customerId} {
+      allow get, list: if isStaff();
+      allow create: if isStaff() && request.resource.data.id == customerId;
+      allow update, delete: if isExistingStaff() && (request.resource.data.id == resource.data.id);
+    }
+
+    /**
+     * @description Sales transaction records. 
+     * @path /sales/{saleId}
+     * @allow get, list, create, update, delete: if isStaff();
+     * @principle Strict staff-only operational access.
+     */
+    match /sales/{saleId} {
+      allow get, list: if isStaff();
+      allow create: if isStaff();
+      allow update, delete: if isExistingStaff();
+    }
+
+    /**
+     * @description Rental agreement records.
+     * @path /rentals/{rentalId}
+     * @allow get, list, create, update, delete: if isStaff();
+     * @principle Strict staff-only operational access.
+     */
+    match /rentals/{rentalId} {
+      allow get, list: if isStaff();
+      allow create: if isStaff();
+      allow update, delete: if isExistingStaff();
+    }
+
+    /**
+     * @description Appointment scheduling. Allows public submission for leads.
+     * @path /appointments/{appointmentId}
+     * @allow create: if true; (Allow leads from unauthenticated users)
+     * @allow get, list, update, delete: if isStaff(); (Staff managed)
+     * @principle Public lead generation with internal staff management.
+     */
+    match /appointments/{appointmentId} {
+      allow create: if true;
+      allow get, list, update, delete: if isStaff();
+    }
+
+    /**
+     * @description Test drive management. Allows public submission for leads.
+     * @path /testDrives/{testDriveId}
+     * @allow create: if true; (Allow leads from unauthenticated users)
+     * @allow get, list, update, delete: if isStaff(); (Staff managed)
+     * @principle Public lead generation with internal staff management.
+     */
+    match /testDrives/{testDriveId} {
+      allow create: if true;
+      allow get, list, update, delete: if isStaff();
+    }
+  }
+}

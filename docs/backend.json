@@ -1,0 +1,415 @@
+{
+  "entities": {
+    "Car": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Car",
+      "type": "object",
+      "description": "Represents a single car available in the showroom for sale, rent, or test drive.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Car entity."
+        },
+        "make": {
+          "type": "string",
+          "description": "The manufacturer of the car (e.g., 'Toyota', 'Ford')."
+        },
+        "model": {
+          "type": "string",
+          "description": "The specific model name of the car (e.g., 'Camry', 'F-150')."
+        },
+        "year": {
+          "type": "number",
+          "description": "The manufacturing year of the car."
+        },
+        "vin": {
+          "type": "string",
+          "description": "Vehicle Identification Number (VIN), a unique code for each specific physical car."
+        },
+        "mileage": {
+          "type": "number",
+          "description": "The total distance a car has traveled, in miles or kilometers."
+        },
+        "price": {
+          "type": "number",
+          "description": "The current selling or listing price of the car."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current availability status of the car (e.g., 'available', 'sold', 'rented', 'under maintenance', 'test drive in progress')."
+        },
+        "color": {
+          "type": "string",
+          "description": "The exterior color of the car."
+        },
+        "fuelType": {
+          "type": "string",
+          "description": "The type of fuel the car uses (e.g., 'Gasoline', 'Electric', 'Hybrid', 'Diesel')."
+        },
+        "transmissionType": {
+          "type": "string",
+          "description": "The type of transmission in the car (e.g., 'Automatic', 'Manual')."
+        },
+        "bodyStyle": {
+          "type": "string",
+          "description": "The body style of the car (e.g., 'Sedan', 'SUV', 'Hatchback', 'Truck')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the car, including features, specifications, and condition."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to the primary image of the car.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "make",
+        "model",
+        "year",
+        "vin",
+        "price",
+        "status",
+        "fuelType",
+        "transmissionType",
+        "bodyStyle"
+      ]
+    },
+    "Customer": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Customer",
+      "type": "object",
+      "description": "Stores information about a customer interacting with the car showroom.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Customer entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the customer."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the customer."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the customer.",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string",
+          "description": "The phone number of the customer."
+        },
+        "address": {
+          "type": "string",
+          "description": "The full postal address of the customer."
+        },
+        "preferences": {
+          "type": "string",
+          "description": "Customer's expressed preferences for car types, features, or budget, used for recommendations."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Internal staff notes or observations about the customer."
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "phone"
+      ]
+    },
+    "Appointment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Appointment",
+      "type": "object",
+      "description": "Records customer appointments for viewing cars or general inquiries.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Appointment entity."
+        },
+        "customerId": {
+          "type": "string",
+          "description": "Reference to the Customer who booked the appointment. (Relationship: Customer 1:N Appointment)"
+        },
+        "carId": {
+          "type": "string",
+          "description": "Reference to the Car related to the appointment, if a specific car is being viewed. (Relationship: Car 1:N Appointment)"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of appointment (e.g., 'Car Viewing', 'General Inquiry', 'Service Consultation')."
+        },
+        "dateTime": {
+          "type": "string",
+          "description": "The scheduled date and time of the appointment.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the appointment (e.g., 'Scheduled', 'Completed', 'Cancelled', 'Rescheduled')."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any additional notes or specific details for the appointment."
+        }
+      },
+      "required": [
+        "id",
+        "customerId",
+        "type",
+        "dateTime",
+        "status"
+      ]
+    },
+    "TestDrive": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TestDrive",
+      "type": "object",
+      "description": "Manages scheduled and completed test drives for customers.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the TestDrive entity."
+        },
+        "customerId": {
+          "type": "string",
+          "description": "Reference to the Customer who scheduled the test drive. (Relationship: Customer 1:N TestDrive)"
+        },
+        "carId": {
+          "type": "string",
+          "description": "Reference to the Car chosen for the test drive. (Relationship: Car 1:N TestDrive)"
+        },
+        "scheduledDateTime": {
+          "type": "string",
+          "description": "The initially scheduled date and time for the test drive.",
+          "format": "date-time"
+        },
+        "actualStartDateTime": {
+          "type": "string",
+          "description": "The actual start date and time when the test drive began.",
+          "format": "date-time"
+        },
+        "actualEndDateTime": {
+          "type": "string",
+          "description": "The actual end date and time when the test drive finished.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the test drive (e.g., 'Scheduled', 'Started', 'Completed', 'Cancelled', 'No-Show')."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Internal notes about the test drive, including customer feedback or route details."
+        }
+      },
+      "required": [
+        "id",
+        "customerId",
+        "carId",
+        "scheduledDateTime",
+        "status"
+      ]
+    },
+    "Sale": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Sale",
+      "type": "object",
+      "description": "Records details of a car sales transaction.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Sale entity."
+        },
+        "customerId": {
+          "type": "string",
+          "description": "Reference to the Customer who made the purchase. (Relationship: Customer 1:N Sale)"
+        },
+        "carId": {
+          "type": "string",
+          "description": "Reference to the Car that was sold. (Relationship: Car 1:N Sale)"
+        },
+        "saleDate": {
+          "type": "string",
+          "description": "The date and time when the sale was completed.",
+          "format": "date-time"
+        },
+        "salePrice": {
+          "type": "number",
+          "description": "The final agreed-upon price of the car at the time of sale."
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "The method of payment used for the sale (e.g., 'Cash', 'Credit Card', 'Financing', 'Bank Transfer')."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the sale transaction (e.g., 'Pending', 'Completed', 'Cancelled', 'Financing Approved')."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any special conditions, agreements, or details related to the sale."
+        }
+      },
+      "required": [
+        "id",
+        "customerId",
+        "carId",
+        "saleDate",
+        "salePrice",
+        "paymentMethod",
+        "status"
+      ]
+    },
+    "Rental": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Rental",
+      "type": "object",
+      "description": "Manages car rental agreements and tracks rental periods.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Rental entity."
+        },
+        "customerId": {
+          "type": "string",
+          "description": "Reference to the Customer who rented the car. (Relationship: Customer 1:N Rental)"
+        },
+        "carId": {
+          "type": "string",
+          "description": "Reference to the Car that was rented. (Relationship: Car 1:N Rental)"
+        },
+        "rentalStartDate": {
+          "type": "string",
+          "description": "The scheduled start date and time of the rental period.",
+          "format": "date-time"
+        },
+        "rentalEndDate": {
+          "type": "string",
+          "description": "The scheduled end date and time of the rental period.",
+          "format": "date-time"
+        },
+        "actualReturnDate": {
+          "type": "string",
+          "description": "The actual date and time the car was returned, if different from rentalEndDate.",
+          "format": "date-time"
+        },
+        "dailyRate": {
+          "type": "number",
+          "description": "The daily rental rate agreed upon for the car."
+        },
+        "totalFee": {
+          "type": "number",
+          "description": "The total calculated fee for the rental service, including any additional charges."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the rental (e.g., 'Booked', 'Active', 'Returned', 'Overdue', 'Cancelled')."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any additional notes or specific conditions related to the rental, including damage reports upon return."
+        }
+      },
+      "required": [
+        "id",
+        "customerId",
+        "carId",
+        "rentalStartDate",
+        "rentalEndDate",
+        "dailyRate",
+        "totalFee",
+        "status"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/cars/{carId}",
+        "definition": {
+          "entityName": "Car",
+          "schema": {
+            "$ref": "#/backend/entities/Car"
+          },
+          "description": "Central inventory of vehicles available in the showroom. This collection supports public readability for browsing and staff-only write operations. Documents include a unique carId as the document ID."
+        }
+      },
+      {
+        "path": "/customers/{customerId}",
+        "definition": {
+          "entityName": "Customer",
+          "schema": {
+            "$ref": "#/backend/entities/Customer"
+          },
+          "description": "Records all customer information. This collection is exclusively accessible by authenticated staff members for read, write, update, and delete operations. Documents include a unique customerId as the document ID."
+        }
+      },
+      {
+        "path": "/appointments/{appointmentId}",
+        "definition": {
+          "entityName": "Appointment",
+          "schema": {
+            "$ref": "#/backend/entities/Appointment"
+          },
+          "description": "Records all customer appointments. This collection is managed by authenticated staff members for full CRUD operations. Customer submissions are ideally mediated via a Cloud Function, or handled by strict unauthenticated write rules. Includes denormalized 'customerId' and 'carId' for direct querying and context."
+        }
+      },
+      {
+        "path": "/testDrives/{testDriveId}",
+        "definition": {
+          "entityName": "TestDrive",
+          "schema": {
+            "$ref": "#/backend/entities/TestDrive"
+          },
+          "description": "Manages scheduled and completed test drives. This collection is managed by authenticated staff members for full CRUD operations. Customer submissions are ideally mediated via a Cloud Function, or handled by strict unauthenticated write rules. Includes denormalized 'customerId' and 'carId' for direct querying and context."
+        }
+      },
+      {
+        "path": "/sales/{saleId}",
+        "definition": {
+          "entityName": "Sale",
+          "schema": {
+            "$ref": "#/backend/entities/Sale"
+          },
+          "description": "Records all car sales transactions. This collection is exclusively accessible by authenticated staff members for read, write, update, and delete operations. Includes denormalized 'customerId' and 'carId' for direct querying and context."
+        }
+      },
+      {
+        "path": "/rentals/{rentalId}",
+        "definition": {
+          "entityName": "Rental",
+          "schema": {
+            "$ref": "#/backend/entities/Rental"
+          },
+          "description": "Manages all car rental agreements. This collection is exclusively accessible by authenticated staff members for read, write, update, and delete operations. Includes denormalized 'customerId' and 'carId' for direct querying and context."
+        }
+      },
+      {
+        "path": "/staff_roles/{staffId}",
+        "definition": {
+          "entityName": "StaffRole",
+          "schema": {
+            "$ref": "#/backend/entities/StaffRole"
+          },
+          "description": "Stores roles for authenticated staff members. Used for Database Access Control (DBAC). The 'staffId' parameter corresponds to 'request.auth.uid'. This collection is crucial for Authorization Independence, allowing security rules to check staff roles without requiring 'get()' calls on other application data. Access is read by self, write by admin staff."
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure for AutoHouse Manager is designed to prioritize security, scalability, and debuggability, adhering strictly to the core design principles and mandates. The central theme is **Authorization Independence via Denormalization** and **Structural Segregation** to simplify security rules and enable efficient queries (QAPs).\n\n**Authorization Independence:**\nSince the application involves managing sensitive customer and sales data, we assume that while customers might not require login authentication for *browsing* cars or *submitting requests*, *staff members* who manage the showroom operations (add/update cars, manage customer records, handle sales/rentals/appointments) *will* be authenticated. This allows us to use `request.auth.uid` as mandated. Authorization independence is achieved primarily through:\n1.  **Dedicated Staff Role Collection:** A top-level collection, `/staff_roles/{staffId}`, is introduced. The `staffId` matches the authenticated `request.auth.uid`. This collection will contain documents indicating the role(s) of the staff member (e.g., `admin`, `sales_agent`). Security rules for all sensitive collections (customers, appointments, sales, etc.) will check for the existence of the requesting user's UID in this collection, and potentially their associated role. This entirely eliminates the need for `get()` calls on other application data collections (like `Customer` or `Car`) to determine a user's authorization, making rules atomic and easy to debug.\n2.  **Flat Collections for Staff-Managed Data:** Collections like `/customers`, `/appointments`, `/testDrives`, `/sales`, and `/rentals` are structured as top-level collections. Access to these collections is uniformly granted based on the staff member's role (verified via `/staff_roles`). This means authorization for any document in these collections does not depend on attributes of a parent document.\n\n**QAPs (Rules are not Filters):**\nQuery authorization patterns (QAPs) are fully supported by adhering to structural segregation and clear access models:\n1.  **Public Car Inventory:** The `/cars` collection is designed for public readability. Any unauthenticated user can `list` and `get` all available cars. This is a homogeneous security posture (all documents are publicly readable), allowing `list` operations without filtering.\n2.  **Staff-Managed Data:** For collections like `/customers`, `/appointments`, `/testDrives`, `/sales`, and `/rentals`, the security rules will enforce that *only authenticated staff members with appropriate roles* can perform `list` and `get` operations. Since all documents within these collections share the same access requirements for staff, a staff member can `list` all documents without the rules attempting to filter results post-query. The rule simply states 'if you are staff, you can read everything here'. This prevents inefficient and insecure client-side filtering and ensures predictable query results based on server-side rules.\n\n**Handling Customer Submissions (No Login):**\nFor customer-initiated actions like booking appointments or test drives without login, the primary recommended approach is to mediate these submissions through a secure backend (e.g., Cloud Functions). An unauthenticated client submits data to the function, which then, using service account credentials, writes to the `/appointments` or `/testDrives` collections. This ensures that Firestore security rules are primarily focused on protecting data from direct malicious writes and enforcing staff access, rather than trying to define complex, limited write rules for unauthenticated users directly to Firestore. If direct unauthenticated writes are necessary, rules would allow `create` for `request.auth == null` but enforce strict schema validation and potentially rate limiting through functions, and block updates/deletes.\n\nThis structure provides a clear separation of concerns: public browsing data, staff-managed operational data, and explicit role-based authorization for staff, all while minimizing rule complexity and maximizing debuggability."
+  }
+}

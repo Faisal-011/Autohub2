@@ -1,0 +1,40 @@
+{
+  "placeholderImages": [
+    {
+      "id": "car1",
+      "description": "A modern red sedan parked in a city street.",
+      "imageUrl": "https://images.unsplash.com/photo-1757782630216-9804d549afc4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxyZWQlMjBzZWRhbnxlbnwwfHx8fDE3NjQ1OTIyNjl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "red sedan"
+    },
+    {
+      "id": "car2",
+      "description": "A sleek blue SUV on a scenic mountain road.",
+      "imageUrl": "https://images.unsplash.com/photo-1650938918197-d581a4cda022?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxibHVlJTIwc3V2fGVufDB8fHx8MTc2NDU2MTMyNXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "blue suv"
+    },
+    {
+      "id": "car3",
+      "description": "A classic white convertible with the top down.",
+      "imageUrl": "https://images.unsplash.com/photo-1700461213583-32c00ffcb4de?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHx3aGl0ZSUyMGNvbnZlcnRpYmxlfGVufDB8fHx8MTc2NDUzODQ0NHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "white convertible"
+    },
+    {
+      "id": "car4",
+      "description": "A black luxury sports car on a race track.",
+      "imageUrl": "https://images.unsplash.com/photo-1612095977457-0f2a6354574c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxibGFjayUyMHNwb3J0c2NhcnxlbnwwfHx8fDE3NjQ2MjA2NDF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "black sportscar"
+    },
+    {
+      "id": "car5",
+      "description": "A gray family minivan parked in a suburban driveway.",
+      "imageUrl": "https://images.unsplash.com/photo-1665064953802-eb2b6b216e6f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxncmF5JTIwbWluaXZhbnxlbnwwfHx8fDE3NjQ2MjA2NDF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "gray minivan"
+    },
+    {
+      "id": "car6",
+      "description": "A rugged green off-road vehicle on a dirt path.",
+      "imageUrl": "https://images.unsplash.com/photo-1760688192126-ceda9e1dd0c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxncmVlbiUyMG9mZi1yb2FkfGVufDB8fHx8MTc2NDU3Njg4Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "green off-road"
+    }
+  ]
+}
