@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - faisal/docker-containerization
 
 jobs:
   build-and-push:
