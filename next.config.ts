@@ -1,13 +1,8 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   /* config options here */
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   images: {
     remotePatterns: [
       {
@@ -31,6 +26,12 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'www.wsupercars.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'imagecdn.zigwheels.ae',
         port: '',
         pathname: '/**',
       },

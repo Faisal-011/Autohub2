@@ -5,7 +5,7 @@ import type { TestDrive, TestDriveWithDetails } from '@/lib/types';
 import { AddTestDrive } from './components/add-test-drive';
 
 async function getTestDrives() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('test_drives')
     .select(`
@@ -40,7 +40,7 @@ async function getTestDrives() {
 }
 
 async function getCarsAndCustomers() {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: cars, error: carsError } = await supabase.from('cars').select('id, make, model').eq('status', 'Available');
     const { data: customers, error: customersError } = await supabase.from('customers').select('id, name');
 
