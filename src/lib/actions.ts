@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import type { Appointment, Car, Customer, Rental, Sale, TestDrive } from './types';
 
 export async function addCustomer(formData: FormData): Promise<Customer | { error: string }> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const rawFormData = {
     name: formData.get('name') as string,
@@ -46,7 +46,7 @@ export async function addCustomer(formData: FormData): Promise<Customer | { erro
 }
 
 export async function addTestDrive(formData: FormData): Promise<TestDrive | { error: string }> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const rawFormData = {
     customerId: formData.get('customerId') as string,
@@ -88,7 +88,7 @@ export async function addTestDrive(formData: FormData): Promise<TestDrive | { er
 }
 
 export async function addCar(formData: FormData): Promise<Car | { error: string }> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const rawFormData = {
       make: formData.get('make') as string,
@@ -135,11 +135,11 @@ export async function addCar(formData: FormData): Promise<Car | { error: string 
     status: data.status,
     imageUrl: data.image_url,
     imageHint: data.image_hint,
-  }
+  };
 }
 
 export async function addAppointment(formData: FormData): Promise<Appointment | { error: string }> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const rawFormData = {
     customerId: formData.get('customerId') as string,
@@ -179,7 +179,7 @@ export async function addAppointment(formData: FormData): Promise<Appointment | 
 }
 
 export async function addRental(formData: FormData): Promise<Rental | { error: string }> {
-    const supabase = createClient();
+    const supabase = await createClient();
   
     const rawFormData = {
       carId: formData.get('carId') as string,
@@ -238,7 +238,7 @@ export async function addRental(formData: FormData): Promise<Rental | { error: s
 
 
 export async function recordSale(formData: FormData): Promise<Sale | { error: string }> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const rawFormData = {
     carId: formData.get('carId') as string,

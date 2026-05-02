@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { PurchasesTable } from './components/purchases-table';
 
 async function getSales() {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data, error } = await supabase.from('sales').select('*, customers(name), cars(make, model)');
 
     if (error) {

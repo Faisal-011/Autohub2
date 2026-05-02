@@ -4,7 +4,7 @@ import { CustomerTable } from './components/customer-table';
 import type { Customer } from '@/lib/types';
 
 async function getCustomers() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.from('customers').select('*');
 
   if (error) {

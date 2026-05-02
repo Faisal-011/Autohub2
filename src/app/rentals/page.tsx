@@ -4,7 +4,7 @@ import { RentalsTable } from './components/rentals-table';
 import type { RentalWithDetails } from '@/lib/types';
 
 async function getRentals() {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data, error } = await supabase.from('rentals').select('*, customers(name), cars(make, model)');
 
     if (error) {
@@ -28,7 +28,7 @@ async function getRentals() {
 }
 
 async function getCarsAndCustomers() {
-  const supabase = createClient();
+  const supabase = await createClient();
   // Only fetch available cars for new rentals
   const { data: cars, error: carsError } = await supabase.from('cars').select('id, make, model').eq('status', 'Available');
   const { data: customers, error: customersError } = await supabase.from('customers').select('id, name');
