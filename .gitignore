@@ -43,3 +43,10 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+# terraform
+.terraform/
+.terraform.*
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
