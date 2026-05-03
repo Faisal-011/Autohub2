@@ -1,10 +1,7 @@
-output "cluster_id" {
-  description = "The ID of the Kubernetes cluster"
-  value       = digitalocean_kubernetes_cluster.autohub_cluster.id
+output "cluster_name" {
+  value = google_container_cluster.autohub_cluster.name
 }
 
-output "kubeconfig" {
-  description = "The kubeconfig to connect to the cluster"
-  value       = digitalocean_kubernetes_cluster.autohub_cluster.kube_config[0].raw_config
-  sensitive   = true
+output "domain" {
+  value = var.domain
 }
