@@ -4,7 +4,7 @@ import { SalesTable } from './components/sales-table';
 import type { Sale } from '@/lib/types';
 
 async function getSales() {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data, error } = await supabase.from('sales').select('*, customers(name), cars(make, model)');
 
     if (error) {
@@ -26,7 +26,7 @@ async function getSales() {
 }
 
 async function getCarsAndCustomers() {
-    const supabase = createClient();
+    const supabase = await createClient();
     // Only fetch available cars for new sales
     const { data: cars, error: carsError } = await supabase.from('cars').select('id, make, model, price').eq('status', 'Available');
     const { data: customers, error: customersError } = await supabase.from('customers').select('id, name');

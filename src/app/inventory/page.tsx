@@ -4,7 +4,7 @@ import { CarTable } from './components/car-table';
 import type { Car } from '@/lib/types';
 
 async function getCars() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.from('cars').select('*');
 
   if (error) {

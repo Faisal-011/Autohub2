@@ -14,7 +14,7 @@ import {
 import { createClient } from '@/lib/supabase/server';
 
 async function getDashboardData() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { count: totalInventory, error: inventoryError } = await supabase
     .from('cars')
