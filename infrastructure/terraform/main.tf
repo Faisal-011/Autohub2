@@ -23,7 +23,7 @@ resource "google_container_node_pool" "primary_nodes" {
 
   node_config {
     machine_type = var.machine_type
-    disk_size_gb = 100
+    disk_size_gb = 30
     image_type   = "COS_CONTAINERD"
   }
 

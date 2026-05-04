@@ -50,3 +50,5 @@ firestore-debug.log
 *.tfstate.*
 crash.log
 *.tfvars
+terraform.tfvars
+infrastructure/k8s/secrets.yaml
