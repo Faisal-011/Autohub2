@@ -3,7 +3,7 @@ variable "project_id" {
 }
 
 variable "region" {
-  default = "us-central1-a"
+  default = "us-central1"
 }
 
 variable "cluster_name" {
@@ -23,9 +23,13 @@ variable "image" {
 }
 
 variable "domain" {
-  default = "34.55.30.20.nip.io"
+  default = "34.123.147.226.nip.io"
 }
 
 variable "email" {
   default = "your-email@gmail.com"
 }
+
+variable "supabase_url" {}
+variable "supabase_key" {}
+variable "gemini_key" {}

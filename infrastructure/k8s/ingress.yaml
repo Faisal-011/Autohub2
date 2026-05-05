@@ -9,11 +9,11 @@ metadata:
 spec:
   tls:
   - hosts:
-    - 34.55.30.20.nip.io
+    - 34.123.147.226.nip.io
     secretName: autohub-tls
 
   rules:
-  - host: 34.55.30.20.nip.io
+  - host: 34.123.147.226.nip.io
     http:
       paths:
       - path: /

@@ -42,11 +42,9 @@ resource "kubernetes_secret" "autohub" {
   }
 
   data = {
-    NEXT_PUBLIC_SUPABASE_URL = "https://rfqzbltesehwqiorcxyn.supabase.co"
-
-    NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmcXpibHRlc2Vod3Fpb3JjeHluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2MTU2MDksImV4cCI6MjA4MDE5MTYwOX0.x-e4fpX5j2T8gp6_1J1N3WTjNJy-1ye6RIamLp68ftc"
-
-    GEMINI_API_KEY = "AIzaSyD9lOxSz92vjDI-CaxYFf3DX_lBF7o1oww"
+    NEXT_PUBLIC_SUPABASE_URL      = var.supabase_url
+    NEXT_PUBLIC_SUPABASE_ANON_KEY = var.supabase_key
+    GEMINI_API_KEY                = var.gemini_key
   }
 }
 
@@ -132,6 +130,7 @@ resource "kubernetes_ingress_v1" "autohub" {
     name = "autohub-ingress"
 
     annotations = {
+      "kubernetes.io/ingress.class"    = "nginx" 
       "cert-manager.io/cluster-issuer" = "letsencrypt-prod"
     }
   }
@@ -162,4 +161,27 @@ resource "kubernetes_ingress_v1" "autohub" {
       secret_name = "autohub-tls"
     }
   }
+}
+
+resource "helm_release" "nginx_ingress" {
+  name             = "ingress-nginx"
+  repository       = "https://kubernetes.github.io/ingress-nginx"
+  chart            = "ingress-nginx"
+  namespace        = "ingress-nginx"
+  create_namespace = true
+}
+
+resource "helm_release" "cert_manager" {
+  name             = "cert-manager"
+  repository       = "https://charts.jetstack.io"
+  chart            = "cert-manager"
+  namespace        = "cert-manager"
+  create_namespace = true
+
+  set {
+    name  = "installCRDs"
+    value = "true"
+  }
+
+  depends_on = [helm_release.nginx_ingress]
 }
