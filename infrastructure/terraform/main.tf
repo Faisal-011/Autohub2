@@ -80,8 +80,7 @@ resource "kubernetes_deployment" "autohub" {
         container {
           name  = "autohub"
 
-          # ✅ UPDATED IMAGE (THIS IS THE IMPORTANT FIX)
-          image = "your-docker-repo/autohub2:latest"
+          image = var.image
 
           port {
             container_port = 3000
