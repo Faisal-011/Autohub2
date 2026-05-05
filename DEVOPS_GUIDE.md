@@ -1,27 +1,50 @@
-# 🚀 Autohub DevOps Deployment Guide
+# 🚀 Autohub Deployment (Kubernetes + Terraform + HTTPS)
 
-This project deploys a full-stack application on **Google Kubernetes Engine (GKE)** using **Terraform**, **Docker**, and **Kubernetes**, with **HTTPS via cert-manager**.
+This project deploys the **Autohub application** on Kubernetes using **Terraform**, with **NGINX Ingress** and **automatic HTTPS via cert-manager + Let’s Encrypt**.
 
 ---
 
-# 🧠 Architecture Overview
+# 🧠 Architecture
 
-```text
-User → HTTPS → Ingress → Service → Pods (Next.js App)
-                               ↓
-                        Supabase + Gemini API
+```
+User → NGINX Ingress (LoadBalancer)
+     ↓
+Kubernetes Service (ClusterIP)
+     ↓
+Pods (Autohub App)
+
+cert-manager → Let's Encrypt → HTTPS
 ```
 
 ---
 
-# 📦 Prerequisites
+# ⚠️ Important Notes
 
-Install the following:
+* This setup uses **Google Cloud (GKE)**
+* Only one person (project owner) needs GCP access
+* Others can follow along or use local Kubernetes (Minikube)
 
-* Docker Desktop
-* Terraform
+---
+
+# 🧰 Prerequisites
+
+Install:
+
+* Docker
 * kubectl
-* Google Cloud SDK
+* Helm
+* Terraform
+* Google Cloud SDK (gcloud)
+
+Verify:
+
+```bash
+docker --version
+kubectl version --client
+helm version
+terraform -v
+gcloud --version
+```
 
 ---
 
@@ -35,156 +58,218 @@ gcloud config set project autohub-project
 
 ---
 
-# 🐳 Step 2 — Build & Push Docker Image
-
-Go to project root (where Dockerfile exists):
+# 📂 Step 2 — Clone Repository
 
 ```bash
-cd Autohub2
-```
-
-Build for GKE (IMPORTANT: correct architecture):
-
-```bash
-docker buildx build \
-  --platform linux/amd64 \
-  -t your-docker-repo/autohub2:latest \
-  . \
-  --push
+git clone <your-repo-url>
+cd Autohub2/infrastructure/terraform
 ```
 
 ---
 
-# ⚙️ Step 3 — Configure Secrets
+# ⚙️ Step 3 — Configure Variables
 
-Open `main.tf` and update:
+```bash
+cp terraform.tfvars.example terraform.tfvars
+```
+
+Edit:
 
 ```hcl
-data = {
-  NEXT_PUBLIC_SUPABASE_URL      = "https://your-project.supabase.co"
-  NEXT_PUBLIC_SUPABASE_ANON_KEY = "your-supabase-key"
-  GEMINI_API_KEY               = "your-gemini-key"
-}
+project_id = "autohub-project"
+region     = "us-central1"
 ```
-
-⚠️ Do NOT use `base64encode()` — Terraform handles encoding automatically.
 
 ---
 
-# 🌍 Step 4 — Deploy Infrastructure
+# 🏗️ Step 4 — Initialize Terraform
 
 ```bash
-cd infrastructure/terraform
-
 terraform init
+```
+
+---
+
+# 📊 Step 5 — Plan Deployment
+
+```bash
+terraform plan
+```
+
+---
+
+# 🚀 Step 6 — Deploy Infrastructure
+
+```bash
 terraform apply
 ```
 
-Type:
+Type `yes`
 
-```text
-yes
+⏳ Wait ~10 minutes
+
+---
+
+# 🔗 Step 7 — Connect to Cluster
+
+```bash
+gcloud container clusters get-credentials autohub-cluster \
+  --region us-central1 \
+  --project autohub-project
+```
+
+Verify:
+
+```bash
+kubectl get nodes
 ```
 
 ---
 
-# ☸️ Step 5 — Verify Deployment
+# 🌐 Step 8 — Install NGINX Ingress
 
 ```bash
-kubectl get pods
-kubectl get svc
-kubectl get ingress
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+
+helm install nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx \
+  --create-namespace
+```
+
+Wait:
+
+```bash
+kubectl get pods -n ingress-nginx
+```
+
+---
+
+# 🔐 Step 9 — Install cert-manager
+
+```bash
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+
+helm install cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --set installCRDs=true
+```
+
+Wait:
+
+```bash
+kubectl get pods -n cert-manager
+```
+
+---
+
+# 🌍 Step 10 — Get External IP
+
+```bash
+kubectl get svc -n ingress-nginx
+```
+
+Example:
+
+```
+EXTERNAL-IP: 34.xxx.xxx.xxx
+```
+
+---
+
+# 🔧 Step 11 — Update Domain (CRITICAL)
+
+Edit:
+
+```bash
+terraform.tfvars
+```
+
+```hcl
+domain = "<EXTERNAL-IP>.nip.io"
+```
+
+---
+
+# 🔁 Step 12 — Apply Again
+
+```bash
+terraform apply
+```
+
+---
+
+# 📄 Step 13 — Apply ClusterIssuer
+
+```bash
+kubectl apply -f ../k8s/cluster-issuer.yaml
+```
+
+---
+
+# 🔐 Step 14 — Reset Certificate Flow
+
+```bash
+kubectl delete certificate autohub-tls 2>/dev/null
+kubectl delete challenge --all 2>/dev/null
+kubectl delete order --all 2>/dev/null
+```
+
+---
+
+# 🔁 Step 15 — Apply Again
+
+```bash
+terraform apply
+```
+
+---
+
+# 👀 Step 16 — Verify HTTPS
+
+```bash
 kubectl get certificate
 ```
 
 Expected:
 
-* Pods → Running
-* Certificate → READY = True
-
----
-
-# 🌐 Step 6 — Access Application
-
-Open:
-
-```text
-https://<external-ip>.nip.io
 ```
-
-Example:
-
-```text
-https://34.55.30.20.nip.io
+autohub-tls   True
 ```
 
 ---
 
-# 🧪 Debugging Guide
+# 🌐 Step 17 — Access Application
 
-## Check logs
+```
+https://<EXTERNAL-IP>.nip.io
+```
+
+---
+
+# 🚨 Troubleshooting
+
+## ❌ kubectl error (localhost:8080)
 
 ```bash
-kubectl logs -l app=autohub
+gcloud container clusters get-credentials autohub-cluster \
+  --region us-central1 \
+  --project autohub-project
 ```
 
 ---
 
-## Check environment variables
+## ❌ NGINX webhook error
+
+Wait until:
 
 ```bash
-kubectl exec -it $(kubectl get pod -l app=autohub -o jsonpath="{.items[0].metadata.name}") -- printenv
+kubectl get pods -n ingress-nginx
 ```
 
----
-
-## Common Issues
-
-### ❌ ImagePullBackOff
-
-Fix:
-
-```text
-Build with --platform linux/amd64
-```
-
----
-
-### ❌ Invalid supabaseUrl
-
-Fix:
-
-```text
-Remove base64encode() from Terraform secret
-```
-
----
-
-### ❌ App works locally but fails in cluster
-
-Fix:
-
-```text
-Next.js env variables must be available at build time
-```
-
----
-
-# 🔄 Updating the App
-
-1. Build new version:
-
-```bash
-docker buildx build --platform linux/amd64 -t autohub2:v2 . --push
-```
-
-2. Update image in Terraform:
-
-```hcl
-image = ".../autohub2:v2"
-```
-
-3. Apply:
+All are `Running`, then re-run:
 
 ```bash
 terraform apply
@@ -192,42 +277,50 @@ terraform apply
 
 ---
 
-# 🔐 Security Notes
+## ❌ Certificate stuck (pending)
 
-* Never commit API keys to Git
-* Rotate keys if exposed
-* Use `.tfvars` or secret managers in production
+* Check domain matches NGINX IP
+* Ensure ingress is working:
 
----
-
-# 🎯 Final Result
-
-```text
-✔ Fully automated infrastructure (Terraform)
-✔ Kubernetes deployment
-✔ HTTPS enabled
-✔ Scalable cloud application
+```bash
+kubectl get ingress
 ```
 
 ---
 
-# 🧠 Key Learnings
+# 🧠 DevOps Mapping
 
-* Terraform manages infrastructure declaratively
-* Kubernetes handles scaling and deployment
-* Docker images must match target architecture
-* Secrets should not be manually encoded
-* Next.js env variables can be build-time sensitive
+| Stage            | Tool                         |
+| ---------------- | ---------------------------- |
+| Infrastructure   | Terraform                    |
+| Containerization | Docker                       |
+| Orchestration    | Kubernetes                   |
+| Routing          | NGINX Ingress                |
+| Security         | cert-manager + Let’s Encrypt |
 
 ---
 
-# 🚀 Future Improvements
+# ✅ Final Result
 
-* CI/CD pipeline (GitHub Actions)
-* Autoscaling (HPA)
-* Monitoring (Prometheus + Grafana)
-* Custom domain (no nip.io)
+You will have:
 
+* Scalable Kubernetes deployment
+* External access via NGINX
+* Automatic HTTPS
+* Fully automated infrastructure
+
+---
+
+# 🔥 Tip
+
+External IP changes after rebuild. Always update:
+
+```hcl
+domain = "<NEW-IP>.nip.io"
 ```
-```
 
+---
+
+# 📌 Author Notes
+
+This project demonstrates a complete **DevOps deployment pipeline**, including infrastructure provisioning, container orchestration, networking, and security automation.
