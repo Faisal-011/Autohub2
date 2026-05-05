@@ -13,7 +13,7 @@ spec:
     secretName: autohub-tls
 
   rules:
-  - host: 34.123.147.226.nip.io
+  - host: 104.197.83.201.nip.io
     http:
       paths:
       - path: /
