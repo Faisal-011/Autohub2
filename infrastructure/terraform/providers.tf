@@ -1,10 +1,9 @@
 terraform {
-  # Shared remote state — all collaborators read/write the same state file.
-  # Run `gsutil mb gs://autohub-terraform-state` once to create the bucket.
-  backend "gcs" {
-    bucket = "autohub-terraform-state"
-    prefix = "terraform/state"
-  }
+  # Temporarily using local backend - switch to GCS once bucket is created
+  # backend "gcs" {
+  #   bucket = "autohub-terraform-state"
+  #   prefix = "terraform/state"
+  # }
   required_providers {
     google = {
       source  = "hashicorp/google"
