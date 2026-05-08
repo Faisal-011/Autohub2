@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import type { Appointment, Car, Customer, Rental, Sale, TestDrive } from './types';
+import { dbErrorCounter, dbQueryDuration, businessEventCounter } from '@/app/api/metrics/route';
 
 export async function addCustomer(formData: FormData): Promise<Customer | { error: string }> {
   const supabase = await createClient();
@@ -177,65 +178,69 @@ export async function addAppointment(formData: FormData): Promise<Appointment | 
     status: data.status,
   };
 }
-
 export async function addRental(formData: FormData): Promise<Rental | { error: string }> {
-    const supabase = await createClient();
+  const supabase = await createClient();
+
+  const rawFormData = {
+    carId: formData.get('carId') as string,
+    customerId: formData.get('customerId') as string,
+    startDate: formData.get('startDate') as string,
+    endDate: formData.get('endDate') as string,
+    totalFee: Number(formData.get('totalFee')),
+  };
   
-    const rawFormData = {
-      carId: formData.get('carId') as string,
-      customerId: formData.get('customerId') as string,
-      startDate: formData.get('startDate') as string,
-      endDate: formData.get('endDate') as string,
-      totalFee: Number(formData.get('totalFee')),
-    };
-    
-    if (!rawFormData.carId || !rawFormData.customerId || !rawFormData.startDate || !rawFormData.endDate || !rawFormData.totalFee) {
-      return { error: 'Missing required fields.' };
-    }
+  if (!rawFormData.carId || !rawFormData.customerId || !rawFormData.startDate || !rawFormData.endDate || !rawFormData.totalFee) {
+    return { error: 'Missing required fields.' };
+  }
 
-    const { data: rentalData, error: rentalError } = await supabase
-      .from('rentals')
-      .insert({
-          car_id: rawFormData.carId,
-          customer_id: rawFormData.customerId,
-          start_date: rawFormData.startDate,
-          end_date: rawFormData.endDate,
-          total_fee: rawFormData.totalFee,
-          status: 'Active',
-      })
-      .select()
-      .single();
+  const end = dbQueryDuration.startTimer({ operation: 'insert', table: 'rentals' });
+  const { data: rentalData, error: rentalError } = await supabase
+    .from('rentals')
+    .insert({
+      car_id: rawFormData.carId,
+      customer_id: rawFormData.customerId,
+      start_date: rawFormData.startDate,
+      end_date: rawFormData.endDate,
+      total_fee: rawFormData.totalFee,
+      status: 'Active',
+    })
+    .select()
+    .single();
+  end();
 
-    if (rentalError) {
-      console.error('Error creating rental:', rentalError);
-      return { error: `Failed to create rental. ${rentalError.message}` };
-    }
+  if (rentalError) {
+    dbErrorCounter.inc({ operation: 'insert', table: 'rentals' });
+    businessEventCounter.inc({ event_type: 'rental', status: 'failed' });
+    console.error('Error creating rental:', rentalError);
+    return { error: `Failed to create rental. ${rentalError.message}` };
+  }
 
-    const { error: carUpdateError } = await supabase
-      .from('cars')
-      .update({ status: 'Rented' })
-      .eq('id', rawFormData.carId);
+  businessEventCounter.inc({ event_type: 'rental', status: 'success' });
 
-    if (carUpdateError) {
-      console.error('Error updating car status:', carUpdateError);
-      // You might want to handle rollback logic here
-      return { error: `Failed to update car status. ${carUpdateError.message}` };
-    }
-  
-    revalidatePath('/rentals');
-    revalidatePath('/inventory');
+  const { error: carUpdateError } = await supabase
+    .from('cars')
+    .update({ status: 'Rented' })
+    .eq('id', rawFormData.carId);
 
-    return {
-      id: rentalData.id,
-      carId: rentalData.car_id,
-      customerId: rentalData.customer_id,
-      startDate: new Date(rentalData.start_date),
-      endDate: new Date(rentalData.end_date),
-      totalFee: rentalData.total_fee,
-      status: rentalData.status,
-    };
+  if (carUpdateError) {
+    dbErrorCounter.inc({ operation: 'update', table: 'cars' });
+    console.error('Error updating car status:', carUpdateError);
+    return { error: `Failed to update car status. ${carUpdateError.message}` };
+  }
+
+  revalidatePath('/rentals');
+  revalidatePath('/inventory');
+
+  return {
+    id: rentalData.id,
+    carId: rentalData.car_id,
+    customerId: rentalData.customer_id,
+    startDate: new Date(rentalData.start_date),
+    endDate: new Date(rentalData.end_date),
+    totalFee: rentalData.total_fee,
+    status: rentalData.status,
+  };
 }
-
 
 export async function recordSale(formData: FormData): Promise<Sale | { error: string }> {
   const supabase = await createClient();
@@ -251,6 +256,7 @@ export async function recordSale(formData: FormData): Promise<Sale | { error: st
     return { error: 'Missing required fields.' };
   }
 
+  const end = dbQueryDuration.startTimer({ operation: 'insert', table: 'sales' });
   const { data: saleData, error: saleError } = await supabase
     .from('sales')
     .insert({
@@ -261,11 +267,16 @@ export async function recordSale(formData: FormData): Promise<Sale | { error: st
     })
     .select()
     .single();
+  end();
 
   if (saleError) {
+    dbErrorCounter.inc({ operation: 'insert', table: 'sales' });
+    businessEventCounter.inc({ event_type: 'sale', status: 'failed' });
     console.error('Error recording sale:', saleError);
     return { error: `Failed to record sale. ${saleError.message}` };
   }
+
+  businessEventCounter.inc({ event_type: 'sale', status: 'success' });
 
   const { error: carUpdateError } = await supabase
     .from('cars')
@@ -273,10 +284,10 @@ export async function recordSale(formData: FormData): Promise<Sale | { error: st
     .eq('id', rawFormData.carId);
   
   if (carUpdateError) {
+    dbErrorCounter.inc({ operation: 'update', table: 'cars' });
     console.error('Error updating car status:', carUpdateError);
     return { error: `Failed to update car status. ${carUpdateError.message}` };
   }
-
 
   revalidatePath('/sales');
   revalidatePath('/inventory');

@@ -52,3 +52,7 @@ crash.log
 *.tfvars
 terraform.tfvars
 infrastructure/k8s/secrets.yaml
+
+.env
+.env.local
+google-cloud-sdk/
