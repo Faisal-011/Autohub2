@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import type { Appointment, Car, Customer, Rental, Sale, TestDrive } from './types';
+import { dbErrorCounter, dbQueryDuration, businessEventCounter } from '@/lib/metrics';
 
 export async function addCustomer(formData: FormData): Promise<Customer | { error: string }> {
   const supabase = await createClient();
@@ -193,6 +194,7 @@ export async function addRental(formData: FormData): Promise<Rental | { error: s
       return { error: 'Missing required fields.' };
     }
 
+    const end = dbQueryDuration.startTimer({ operation: 'insert', table: 'rentals' });
     const { data: rentalData, error: rentalError } = await supabase
       .from('rentals')
       .insert({
@@ -205,11 +207,16 @@ export async function addRental(formData: FormData): Promise<Rental | { error: s
       })
       .select()
       .single();
+    end();
 
     if (rentalError) {
+      dbErrorCounter.inc({ operation: 'insert', table: 'rentals' });
+      businessEventCounter.inc({ event_type: 'rental', status: 'failed' });
       console.error('Error creating rental:', rentalError);
       return { error: `Failed to create rental. ${rentalError.message}` };
     }
+
+    businessEventCounter.inc({ event_type: 'rental', status: 'success' });
 
     const { error: carUpdateError } = await supabase
       .from('cars')
@@ -217,8 +224,8 @@ export async function addRental(formData: FormData): Promise<Rental | { error: s
       .eq('id', rawFormData.carId);
 
     if (carUpdateError) {
+      dbErrorCounter.inc({ operation: 'update', table: 'cars' });
       console.error('Error updating car status:', carUpdateError);
-      // You might want to handle rollback logic here
       return { error: `Failed to update car status. ${carUpdateError.message}` };
     }
   
@@ -251,6 +258,7 @@ export async function recordSale(formData: FormData): Promise<Sale | { error: st
     return { error: 'Missing required fields.' };
   }
 
+  const end = dbQueryDuration.startTimer({ operation: 'insert', table: 'sales' });
   const { data: saleData, error: saleError } = await supabase
     .from('sales')
     .insert({
@@ -261,11 +269,16 @@ export async function recordSale(formData: FormData): Promise<Sale | { error: st
     })
     .select()
     .single();
+  end();
 
   if (saleError) {
+    dbErrorCounter.inc({ operation: 'insert', table: 'sales' });
+    businessEventCounter.inc({ event_type: 'sale', status: 'failed' });
     console.error('Error recording sale:', saleError);
     return { error: `Failed to record sale. ${saleError.message}` };
   }
+
+  businessEventCounter.inc({ event_type: 'sale', status: 'success' });
 
   const { error: carUpdateError } = await supabase
     .from('cars')
@@ -273,6 +286,7 @@ export async function recordSale(formData: FormData): Promise<Sale | { error: st
     .eq('id', rawFormData.carId);
   
   if (carUpdateError) {
+    dbErrorCounter.inc({ operation: 'update', table: 'cars' });
     console.error('Error updating car status:', carUpdateError);
     return { error: `Failed to update car status. ${carUpdateError.message}` };
   }

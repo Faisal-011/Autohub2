@@ -1,0 +1,14 @@
+grafana:
+  enabled: true
+  adminPassword: "changeme"
+  service:
+    type: LoadBalancer
+
+prometheus:
+  prometheusSpec:
+    additionalScrapeConfigs:
+      - job_name: 'autohub-nextjs'
+        static_configs:
+          - targets: ['autohub-service.default.svc.cluster.local:80']
+        metrics_path: '/api/metrics'
+        scrape_interval: 15s

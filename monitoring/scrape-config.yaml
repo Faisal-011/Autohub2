@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: autohub-scrape-config
+  namespace: monitoring
+data:
+  scrape.yaml: |
+    - job_name: 'autohub-nextjs'
+      static_configs:
+        - targets: ['autohub-service.default.svc.cluster.local:80']
+      metrics_path: '/api/metrics'
+      scrape_interval: 15s

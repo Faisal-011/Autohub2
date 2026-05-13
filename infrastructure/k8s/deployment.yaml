@@ -17,7 +17,7 @@ spec:
       containers:
       - name: autohub
         # Replace with your actual Docker image from the pipeline
-        image: your-docker-repo/autohub2:latest
+        image: us-central1-docker.pkg.dev/autohub2-496117/autohub-repo/autohub2:v4
         ports:
         - containerPort: 3000
         envFrom:

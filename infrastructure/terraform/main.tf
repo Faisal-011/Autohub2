@@ -8,6 +8,12 @@ resource "google_container_cluster" "autohub_cluster" {
 
   remove_default_node_pool = true
   initial_node_count       = 1
+
+  node_config {
+    machine_type = var.machine_type
+    disk_size_gb = 20
+    disk_type    = "pd-standard"
+  }
 }
 
 # ------------------------
@@ -24,6 +30,7 @@ resource "google_container_node_pool" "primary_nodes" {
   node_config {
     machine_type = var.machine_type
     disk_size_gb = 30
+    disk_type    = "pd-standard"
     image_type   = "COS_CONTAINERD"
   }
 
@@ -183,4 +190,132 @@ resource "helm_release" "cert_manager" {
   }
 
   depends_on = [helm_release.nginx_ingress]
+}
+
+# ===================================
+# MONITORING & OBSERVABILITY STACK
+# ===================================
+
+# Create the monitoring namespace
+resource "kubernetes_namespace" "monitoring" {
+  metadata {
+    name = "monitoring"
+  }
+}
+
+# Prometheus + Grafana via kube-prometheus-stack
+resource "helm_release" "kube_prometheus_stack" {
+  name             = "kube-prometheus-stack"
+  repository       = "https://prometheus-community.github.io/helm-charts"
+  chart            = "kube-prometheus-stack"
+  namespace        = kubernetes_namespace.monitoring.metadata[0].name
+  create_namespace = false
+
+  # Grafana settings
+  set {
+    name  = "grafana.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "grafana.adminPassword"
+    value = "changeme"
+  }
+
+  set {
+    name  = "grafana.service.type"
+    value = "LoadBalancer"
+  }
+
+  # Additional scrape config to scrape the AutoHub Next.js /api/metrics endpoint
+  values = [<<-EOT
+    prometheus:
+      prometheusSpec:
+        additionalScrapeConfigs:
+          - job_name: 'autohub-nextjs'
+            static_configs:
+              - targets: ['autohub-service.default.svc.cluster.local:80']
+            metrics_path: '/api/metrics'
+            scrape_interval: 15s
+  EOT
+  ]
+
+  depends_on = [
+    google_container_node_pool.primary_nodes,
+    kubernetes_namespace.monitoring,
+  ]
+}
+
+# Blackbox Exporter for active HTTP probing
+resource "helm_release" "blackbox_exporter" {
+  name             = "blackbox-exporter"
+  repository       = "https://prometheus-community.github.io/helm-charts"
+  chart            = "prometheus-blackbox-exporter"
+  namespace        = kubernetes_namespace.monitoring.metadata[0].name
+  create_namespace = false
+
+  values = [<<-EOT
+    config:
+      modules:
+        http_2xx:
+          prober: http
+          timeout: 5s
+          http:
+            valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+            valid_status_codes: [200]
+            method: GET
+  EOT
+  ]
+
+  depends_on = [
+    google_container_node_pool.primary_nodes,
+    kubernetes_namespace.monitoring,
+  ]
+}
+
+# ConfigMap: Prometheus scrape target for AutoHub metrics
+resource "kubernetes_config_map" "scrape_config" {
+  metadata {
+    name      = "autohub-scrape-config"
+    namespace = kubernetes_namespace.monitoring.metadata[0].name
+  }
+
+  data = {
+    "scrape.yaml" = <<-EOT
+      - job_name: 'autohub-nextjs'
+        static_configs:
+          - targets: ['autohub-service.default.svc.cluster.local:80']
+        metrics_path: '/api/metrics'
+        scrape_interval: 15s
+    EOT
+  }
+}
+
+# ConfigMap: Blackbox Exporter probe targets
+resource "kubernetes_config_map" "blackbox_scrape_config" {
+  metadata {
+    name      = "blackbox-scrape-config"
+    namespace = kubernetes_namespace.monitoring.metadata[0].name
+  }
+
+  data = {
+    "scrape.yaml" = <<-EOT
+      - job_name: 'blackbox-http'
+        metrics_path: /probe
+        params:
+          module: [http_2xx]
+        static_configs:
+          - targets:
+              - http://autohub-service.default.svc.cluster.local:80
+              - http://autohub-service.default.svc.cluster.local:80/api/metrics
+              - http://autohub-service.default.svc.cluster.local:80/api/health
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: blackbox-exporter:9115
+    EOT
+  }
 }
