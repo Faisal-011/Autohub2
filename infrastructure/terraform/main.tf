@@ -98,6 +98,37 @@ resource "kubernetes_deployment" "autohub" {
               name = kubernetes_secret.autohub.metadata[0].name
             }
           }
+
+          liveness_probe {
+            http_get {
+              path = "/api/health"
+              port = 3000
+            }
+            initial_delay_seconds = 30
+            period_seconds        = 15
+            failure_threshold     = 3
+          }
+
+          readiness_probe {
+            http_get {
+              path = "/api/health"
+              port = 3000
+            }
+            initial_delay_seconds = 10
+            period_seconds        = 5
+            failure_threshold     = 3
+          }
+
+          resources {
+            requests = {
+              cpu    = "250m"
+              memory = "512Mi"
+            }
+            limits = {
+              cpu    = "500m"
+              memory = "1Gi"
+            }
+          }
         }
       }
     }
@@ -219,7 +250,7 @@ resource "helm_release" "kube_prometheus_stack" {
 
   set {
     name  = "grafana.adminPassword"
-    value = "changeme"
+    value = var.grafana_password
   }
 
   set {
@@ -288,6 +319,116 @@ resource "kubernetes_config_map" "scrape_config" {
         metrics_path: '/api/metrics'
         scrape_interval: 15s
     EOT
+  }
+}
+
+# ------------------------
+# HORIZONTAL POD AUTOSCALER
+# ------------------------
+
+resource "kubernetes_horizontal_pod_autoscaler_v2" "autohub" {
+  metadata {
+    name = "autohub-hpa"
+  }
+
+  spec {
+    scale_target_ref {
+      api_version = "apps/v1"
+      kind        = "Deployment"
+      name        = kubernetes_deployment.autohub.metadata[0].name
+    }
+
+    min_replicas = 2
+    max_replicas = 10
+
+    metric {
+      type = "Resource"
+      resource {
+        name = "cpu"
+        target {
+          type                = "Utilization"
+          average_utilization = 70
+        }
+      }
+    }
+
+    metric {
+      type = "Resource"
+      resource {
+        name = "memory"
+        target {
+          type                = "Utilization"
+          average_utilization = 80
+        }
+      }
+    }
+  }
+}
+
+# ------------------------
+# NETWORK POLICIES
+# ------------------------
+
+resource "kubernetes_network_policy" "autohub" {
+  metadata {
+    name      = "autohub-network-policy"
+    namespace = "default"
+  }
+
+  spec {
+    pod_selector {
+      match_labels = {
+        app = "autohub"
+      }
+    }
+
+    policy_types = ["Ingress", "Egress"]
+
+    ingress {
+      from {
+        namespace_selector {
+          match_labels = {
+            "kubernetes.io/metadata.name" = "ingress-nginx"
+          }
+        }
+      }
+      ports {
+        protocol = "TCP"
+        port     = "3000"
+      }
+    }
+
+    ingress {
+      from {
+        namespace_selector {
+          match_labels = {
+            "kubernetes.io/metadata.name" = "monitoring"
+          }
+        }
+      }
+      ports {
+        protocol = "TCP"
+        port     = "3000"
+      }
+    }
+
+    egress {
+      ports {
+        protocol = "UDP"
+        port     = "53"
+      }
+      ports {
+        protocol = "TCP"
+        port     = "53"
+      }
+    }
+
+    egress {
+      ports {
+        protocol = "TCP"
+        port     = "443"
+      }
+    }
   }
 }
 

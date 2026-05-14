@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: alertmanager-kube-prometheus-stack
+  namespace: monitoring
+type: Opaque
+stringData:
+  alertmanager.yaml: |
+    global:
+      resolve_timeout: 5m
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'alertmanager@autohub2.com'
+      smtp_auth_username: 'qsirius12@gmail.com'
+      # Set this via: kubectl create secret generic alertmanager-smtp-password \
+      #   --from-literal=password=<your-gmail-app-password> -n monitoring
+      smtp_auth_password: '${SMTP_PASSWORD}'
+      smtp_require_tls: true
+
+    route:
+      group_by: ['alertname', 'severity']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      receiver: 'email-critical'
+      routes:
+      - match:
+          severity: critical
+        receiver: 'email-critical'
+        continue: false
+      - match:
+          severity: warning
+        receiver: 'email-warning'
+        continue: false
+
+    receivers:
+    - name: 'email-critical'
+      email_configs:
+      - to: 'qsirius12@gmail.com'
+        subject: '[CRITICAL] AutoHub Alert: {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>Critical Alert Fired</h2>
+          {{ range .Alerts }}
+          <p><strong>Alert:</strong> {{ .Annotations.summary }}<br>
+          <strong>Description:</strong> {{ .Annotations.description }}<br>
+          <strong>Since:</strong> {{ .StartsAt }}</p>
+          {{ end }}
+        send_resolved: true
+
+    - name: 'email-warning'
+      email_configs:
+      - to: 'qsirius12@gmail.com'
+        subject: '[WARNING] AutoHub Alert: {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>Warning Alert Fired</h2>
+          {{ range .Alerts }}
+          <p><strong>Alert:</strong> {{ .Annotations.summary }}<br>
+          <strong>Description:</strong> {{ .Annotations.description }}<br>
+          <strong>Since:</strong> {{ .StartsAt }}</p>
+          {{ end }}
+        send_resolved: true
+
+    inhibit_rules:
+    - source_match:
+        severity: 'critical'
+      target_match:
+        severity: 'warning'
+      equal: ['alertname']

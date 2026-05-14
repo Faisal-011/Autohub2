@@ -1,6 +1,8 @@
 grafana:
   enabled: true
-  adminPassword: "changeme"
+  # Set via: export TF_VAR_grafana_password="<strong-password>"
+  # Never commit a real password here.
+  adminPassword: "${var.grafana_password}"
   service:
     type: LoadBalancer
 

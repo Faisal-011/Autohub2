@@ -43,6 +43,7 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+
 # terraform
 .terraform/
 .terraform.*
@@ -52,3 +53,6 @@ crash.log
 *.tfvars
 terraform.tfvars
 infrastructure/k8s/secrets.yaml
+
+# claude local settings (may contain tokens)
+.claude/settings.local.json

@@ -11,7 +11,7 @@ variable "cluster_name" {
 }
 
 variable "node_count" {
-  default = 1
+  default = 2
 }
 
 variable "machine_type" {
@@ -19,7 +19,7 @@ variable "machine_type" {
 }
 
 variable "image" {
-  default = "your-docker-repo/autohub2:latest"
+  default = "us-central1-docker.pkg.dev/autohub2-496117/autohub-repo/autohub2:latest"
 }
 
 variable "domain" {
@@ -33,3 +33,7 @@ variable "email" {
 variable "supabase_url" {}
 variable "supabase_key" {}
 variable "gemini_key" {}
+variable "grafana_password" {
+  description = "Grafana admin password. Set via TF_VAR_grafana_password env var — never hardcode."
+  sensitive   = true
+}
