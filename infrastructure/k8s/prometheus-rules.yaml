@@ -11,7 +11,7 @@ spec:
     interval: 30s
     rules:
     - alert: AutoHubDown
-      expr: probe_success{job="blackbox-http", instance=~".*autohub-service.*"} == 0
+      expr: probe_success{job="probe/monitoring/autohub-blackbox", instance=~"https://35.192.141.65.*", instance!~".*/api/.*"} == 0
       for: 2m
       labels:
         severity: critical
@@ -20,7 +20,7 @@ spec:
         description: "The AutoHub endpoint {{ $labels.instance }} has been down for more than 2 minutes."
 
     - alert: AutoHubHealthCheckFailing
-      expr: probe_success{job="blackbox-http", instance=~".*/api/health"} == 0
+      expr: probe_success{job="probe/monitoring/autohub-blackbox", instance=~".*/api/health"} == 0
       for: 1m
       labels:
         severity: critical

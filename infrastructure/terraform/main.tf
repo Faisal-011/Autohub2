@@ -14,6 +14,10 @@ resource "google_container_cluster" "autohub_cluster" {
     disk_size_gb = 20
     disk_type    = "pd-standard"
   }
+
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 # ------------------------
