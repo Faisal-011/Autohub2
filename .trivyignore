@@ -1,0 +1,26 @@
+# Trivy CVE ignore list
+# These are transitive/bundled dependencies inside the Next.js standalone output
+# that cannot be patched via npm overrides. Reviewed and accepted below.
+
+# cross-spawn@7.0.3 — ReDoS via regex. Not exploitable: app does not spawn
+# child processes from user input. npm override forces 7.0.6 at top level.
+CVE-2024-21538
+
+# glob@10.4.2 — Command injection via malicious glob pattern. Not exploitable:
+# app does not pass user input to glob calls. Override forces 10.5.0 at top level.
+CVE-2025-64756
+
+# minimatch — DoS via crafted patterns. Not exploitable: app does not pass
+# user input to minimatch. Override forces 9.0.9 at top level.
+CVE-2026-26996
+CVE-2026-27903
+CVE-2026-27904
+
+# tar@6.x — Path traversal in archive extraction. Not exploitable: app does
+# not extract user-provided archives. Fix requires breaking upgrade to tar@7.x.
+CVE-2026-23745
+CVE-2026-23950
+CVE-2026-24842
+CVE-2026-26960
+CVE-2026-29786
+CVE-2026-31802
