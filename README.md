@@ -1,6 +1,6 @@
 # AutoHub Manager
 
-A full-stack car dealership management system built with Next.js 15, Supabase, and Genkit AI. Manages inventory, customers, sales, rentals, test drives, and includes an AI-powered car recommendation engine.
+A full-stack car dealership management system built with Next.js 15, Supabase, and Genkit AI. Manages inventory, customers, sales, rentals, test drives, and includes an AI-powered car recommendation engine. hello
 
 ---
 
